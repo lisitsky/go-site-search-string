@@ -1,4 +1,7 @@
-all: install
+all: get install
+
+get:
+	go get -v -u github.com/lisitsky/go-site-search-string
 
 install:
 	go install

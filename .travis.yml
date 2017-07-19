@@ -9,5 +9,5 @@ go:
 #install:
 #  - go get -u github.com/lisitsky/go-site-search-string
 
-#script:
-#  - make test
+script:
+  - make test

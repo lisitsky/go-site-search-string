@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,11 +13,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Request structure
+// Sites - slice of string of sites to visit
+// SearchText - text to search on these sites
 type Request struct {
 	Sites      []string `json:"sites" binding:"required"`
 	SearchText string   `json:"search_text" binding:"required"`
 }
 
+// Response structure
+// FoundAtSite - URL of a site  where SearchText was found
 type Response struct {
 	FoundAtSite string `json:"FoundAtSite"`
 }
@@ -27,13 +31,13 @@ func getConfigSettings(name string) interface{} {
 	// Here we load config and return specific keys
 	switch name {
 	case "HTTP_TIMEOUT":
-		to := os.Getenv("HTTP_TIMEOUT")
-		to_int, err := strconv.ParseInt(to, 10, 64)
+		toStr := os.Getenv("HTTP_TIMEOUT")
+		toInt, err := strconv.ParseInt(toStr, 10, 64)
 		if err != nil {
 			// if we got an error set timeout to default
 			return time.Duration(75) * time.Second
 		}
-		return time.Duration(to_int) * time.Second
+		return time.Duration(toInt) * time.Second
 	}
 	return nil
 }
@@ -43,6 +47,7 @@ func main() {
 	router.Run(":8080")
 }
 
+// GetEngine returns gin.Engine instance with handlers
 func GetEngine() *gin.Engine {
 	router := gin.Default()
 	router.POST("/checkText", checkHandler)
@@ -50,6 +55,7 @@ func GetEngine() *gin.Engine {
 	return router
 }
 
+// HealthCheckHandler - handler to be used to check service health
 func HealthCheckHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
@@ -116,7 +122,7 @@ func getContents(addr string) (body string, err error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New(fmt.Sprintf("Error getting %v -- %v", addr, resp))
+		return "", fmt.Errorf("Error getting %v -- %v", addr, resp)
 	}
 	bodySlice, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

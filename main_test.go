@@ -198,7 +198,7 @@ func TestCheckSites_BothDoNotContain(t *testing.T) {
 }
 
 func TestCheckSites_OnlyFirstContains(t *testing.T) {
-	var v1, v2 bool
+	var v1 bool
 	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Present")
 		v1 = true
@@ -208,7 +208,6 @@ func TestCheckSites_OnlyFirstContains(t *testing.T) {
 
 	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "No contents - 2")
-		v2 = true
 	})
 	ts2 := httptest.NewServer(handler2)
 	defer ts2.Close()
@@ -221,17 +220,14 @@ func TestCheckSites_OnlyFirstContains(t *testing.T) {
 }
 
 func TestCheckSites_BothContain(t *testing.T) {
-	var v1, v2 bool
 	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Present")
-		v1 = true
 	})
 	ts1 := httptest.NewServer(handler1)
 	defer ts1.Close()
 
 	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "Present")
-		v2 = true
 	})
 	ts2 := httptest.NewServer(handler2)
 	defer ts2.Close()
@@ -294,30 +290,33 @@ func TestCheckTextServer(t *testing.T) {
 
 	ts := httptest.NewServer(GetEngine())
 	payload := Request{Sites: []string{ts1.URL, ts2.URL}, SearchText: "Present"}
-	payload_sb, err := json.Marshal(payload)
+	payloadSb, err := json.Marshal(payload)
 	if err != nil {
 		t.Fatalf("Cannot marshal Request %v to json. Error: %v", payload, err)
 	}
 	//fmt.Printf("Payload %q \n", payload_sb)
 	resp, err := http.Post(ts.URL+"/checkText", "application/json",
-		bytes.NewBuffer(payload_sb))
+		bytes.NewBuffer(payloadSb))
+	if err != nil {
+		t.Fatalf("Cannot make post request. Err is: %v", err)
+	}
 	defer resp.Body.Close()
 
 	//fmt.Printf("Response: %v\n ", resp)
 	assert.Equal(t, true, v1, "First server should be visited")
 	assert.Equal(t, true, v2, "Second server should be visited")
-	body_sb, err := ioutil.ReadAll(resp.Body)
+	bodySb, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal("Error reading body", err)
 	}
-	//result := string(body_sb)
+	//result := string(bodySb)
 	//fmt.Printf("Body: %v \n", body)
-	var decoded_response Response
-	err = json.Unmarshal(body_sb, &decoded_response)
+	var decodedResponse Response
+	err = json.Unmarshal(bodySb, &decodedResponse)
 	if err != nil {
-		t.Fatalf("Cannot decode response <%p>from server. Err: %v", body_sb, err)
+		t.Fatalf("Cannot decode response <%p>from server. Err: %v", bodySb, err)
 	}
-	assert.Contains(t, []string{ts1.URL, ts2.URL}, decoded_response.FoundAtSite,
+	assert.Contains(t, []string{ts1.URL, ts2.URL}, decodedResponse.FoundAtSite,
 		"Should be first or second ")
 }
 
@@ -328,19 +327,19 @@ func TestHealthCheckHandler(t *testing.T) {
 
 	engine.ServeHTTP(w, req)
 	resp := w.Result()
-	body_sb, _ := ioutil.ReadAll(resp.Body)
+	bodySb, _ := ioutil.ReadAll(resp.Body)
 
 	//fmt.Println("Resp status code: ", resp.StatusCode)
 	//fmt.Println(resp.Header.Get("Content-Type"))
-	//fmt.Println("Body:", string(body_sb))
+	//fmt.Println("Body:", string(bodySb))
 
-	var decoded_response interface{}
-	err := json.Unmarshal(body_sb, &decoded_response)
+	var decodedResponse interface{}
+	err := json.Unmarshal(bodySb, &decodedResponse)
 	if err != nil {
-		t.Fatalf("Cannot decode response <%p>from server. Err: %v", body_sb, err)
+		t.Fatalf("Cannot decode response <%p>from server. Err: %v", bodySb, err)
 	}
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "Should be HTTP 200 OK")
-	assert.Equal(t, map[string]interface{}{"status": "ok"}, decoded_response,
+	assert.Equal(t, map[string]interface{}{"status": "ok"}, decodedResponse,
 		"Should return status:ok")
 }
 
@@ -363,24 +362,27 @@ func TestCheckSitesHandler_BothDoNotContain(t *testing.T) {
 	ts := httptest.NewServer(GetEngine())
 	defer ts.Close()
 	payload := Request{Sites: []string{ts1.URL, ts2.URL}, SearchText: "Present"}
-	payload_sb, err := json.Marshal(payload)
+	payloadSb, err := json.Marshal(payload)
 	if err != nil {
 		t.Fatalf("Cannot marshal Request %v to json. Error: %v", payload, err)
 	}
-	//fmt.Printf("Payload %q \n", payload_sb)
+	//fmt.Printf("Payload %q \n", payloadSb)
 	resp, err := http.Post(ts.URL+"/checkText", "application/json",
-		bytes.NewBuffer(payload_sb))
+		bytes.NewBuffer(payloadSb))
+	if err != nil {
+		t.Fatalf("Cannot make post request. Err is: %v", err)
+	}
 	defer resp.Body.Close()
 
 	//fmt.Printf("Response: %v\n ", resp)
 	assert.Equal(t, true, v1, "First server should be visited")
 	assert.Equal(t, true, v2, "Second server should be visited")
 	assert.Equal(t, http.StatusNoContent, resp.StatusCode, "Status should be 204 No Content")
-	body_sb, err := ioutil.ReadAll(resp.Body)
+	bodySb, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal("Error reading body", err)
 	}
-	assert.Equal(t, 0, len(body_sb), "Body length for 204 should be 0 length")
+	assert.Equal(t, 0, len(bodySb), "Body length for 204 should be 0 length")
 	assert.Equal(t, true, v1, "First server should be visited")
 	assert.Equal(t, true, v2, "Second server should be visited")
 }
@@ -400,14 +402,14 @@ func TestChecksSitesHandler_InvalidJSON(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, resp.StatusCode,
 		"Status should be HTTP 400 BadRequest")
 	//resp := resp.Result()
-	body_sb, _ := ioutil.ReadAll(resp.Body)
-	var decoded_response interface{}
-	err = json.Unmarshal(body_sb, &decoded_response)
+	bodySb, _ := ioutil.ReadAll(resp.Body)
+	var decodedResponse interface{}
+	err = json.Unmarshal(bodySb, &decodedResponse)
 	if err != nil {
-		t.Fatalf("Cannot decode response <%p> from server. Err: %v", body_sb, err)
+		t.Fatalf("Cannot decode response <%p> from server. Err: %v", bodySb, err)
 	}
 	//assert.Equal(t, http.StatusBadRequest, resp.StatusCode, "Should be HTTP 400 BadRequest")
-	assert.Equal(t, map[string]interface{}{"status": "bad request"}, decoded_response,
+	assert.Equal(t, map[string]interface{}{"status": "bad request"}, decodedResponse,
 		"Should return status:bad request")
 
 }

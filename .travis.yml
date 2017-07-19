@@ -3,7 +3,7 @@ language: go
 go:
   - 1.8.x
   - tip
-  - master
+  # - master  the same as 'tip'
 
 before_install:
   - go get github.com/mattn/goveralls

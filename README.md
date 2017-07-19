@@ -1,5 +1,7 @@
 # Go Lang  test
 
+[![Build Status](https://travis-ci.org/lisitsky/go-site-search-string.svg?branch=master)](https://travis-ci.org/lisitsky/go-site-search-string)  [![Coverage Status](https://coveralls.io/repos/github/lisitsky/go-site-search-string/badge.svg?branch=master)](https://coveralls.io/github/lisitsky/go-site-search-string?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/lisitsky/go-site-search-string)](https://goreportcard.com/report/github.com/lisitsky/go-site-search-string)
+
 
 Using Gin framework <https://github.com/gin-gonic/gin> create a web server with a handler `/checkText`.
 Handler will listen for `POST` request with such `JSON`:

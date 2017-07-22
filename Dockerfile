@@ -10,6 +10,10 @@ COPY --from=build-env /src/goapp /app/
 ENTRYPOINT /goapp
 
 
+###
+# Basic image builder
+#FROM golang:onbuild AS builder
+#EXPOSE 8080
 
 #FROM golang:1.8
 #
@@ -32,6 +36,7 @@ ENTRYPOINT /goapp
 #
 
 
+#FROM builder
 
 ####
 ## Basic image builder

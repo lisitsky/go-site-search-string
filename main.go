@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -27,24 +28,35 @@ type Response struct {
 	FoundAtSite string `json:"FoundAtSite"`
 }
 
-func getConfigSettings(name string) interface{} {
-	// Here we load config and return specific keys
-	switch name {
-	case "HTTP_TIMEOUT":
-		toStr := os.Getenv("HTTP_TIMEOUT")
-		toInt, err := strconv.ParseInt(toStr, 10, 64)
-		if err != nil {
-			// if we got an error set timeout to default
-			return time.Duration(75) * time.Second
-		}
-		return time.Duration(toInt) * time.Second
+type Config struct {
+	Http struct {
+		Timeout time.Duration
+		Listen  string
 	}
-	return nil
+}
+
+func GetConfig() *Config {
+	var c = &Config{}
+	httpTimeoutStr := os.Getenv("HTTP_TIMEOUT")
+	httpTimeoutInt, err := strconv.ParseInt(httpTimeoutStr, 10, 64)
+	if err == nil {
+		c.Http.Timeout = time.Duration(httpTimeoutInt) * time.Second
+	}
+
+	var httpListen string
+	httpListen = os.Getenv("HTTP_LISTEN")
+	if httpListen == "" {
+		httpListen = ":8080"
+	}
+	c.Http.Listen = httpListen
+
+	return c
 }
 
 func main() {
+	var config = GetConfig()
 	router := GetEngine()
-	router.Run(":8080")
+	router.Run(config.Http.Listen)
 }
 
 // GetEngine returns gin.Engine instance with handlers
@@ -114,8 +126,18 @@ func checkSite(addr string, text string) (found bool, err error) {
 	return strings.Contains(body, text), nil
 }
 
+// Read body if there's an error reading body, return "", err
+func getBodyString(respBody io.Reader) (string, error) {
+	bodySlice, err := ioutil.ReadAll(respBody)
+	if err != nil {
+		return "", err
+	}
+	return string(bodySlice), nil
+}
+
 func getContents(addr string) (body string, err error) {
-	httpClient := &http.Client{Timeout: getConfigSettings("HTTP_TIMEOUT").(time.Duration)}
+	var config = GetConfig()
+	httpClient := &http.Client{Timeout: config.Http.Timeout}
 	resp, err := httpClient.Get(addr)
 	if err != nil {
 		return "", err
@@ -124,10 +146,7 @@ func getContents(addr string) (body string, err error) {
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("Error getting %v -- %v", addr, resp)
 	}
-	bodySlice, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	body = string(bodySlice)
+	// In case unreadable body just treat it as empty
+	body, _ = getBodyString(resp.Body)
 	return body, nil
 }

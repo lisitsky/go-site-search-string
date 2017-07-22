@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -242,13 +243,14 @@ func TestCheckSites_BothContain(t *testing.T) {
 }
 
 func TestCheckSites_TwoSlowHandlers_BothContain(t *testing.T) {
+	var config = GetConfig()
 	var v1, v2 bool
 	var wg sync.WaitGroup
 	wg.Add(2)
 	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer wg.Done()
 		v1 = true
-		time.Sleep(2 * getConfigSettings("HTTP_TIMEOUT").(time.Duration)) // Use double HTTP_TIMEOUT
+		time.Sleep(2 * config.Http.Timeout) // Use double HTTP_TIMEOUT
 		io.WriteString(w, "Present")
 	})
 	ts1 := httptest.NewServer(handler1)
@@ -257,7 +259,7 @@ func TestCheckSites_TwoSlowHandlers_BothContain(t *testing.T) {
 	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer wg.Done()
 		v2 = true
-		time.Sleep(2 * getConfigSettings("HTTP_TIMEOUT").(time.Duration))
+		time.Sleep(2 * config.Http.Timeout)
 		io.WriteString(w, "Present")
 	})
 	ts2 := httptest.NewServer(handler2)
@@ -416,6 +418,8 @@ func TestChecksSitesHandler_InvalidJSON(t *testing.T) {
 
 func TestMainExecution(t *testing.T) {
 	go main()
+	// Wait for launch
+	time.Sleep(time.Duration(200) * time.Millisecond)
 	resp, err := http.Get("http://127.0.0.1:8080/checkHealth") //TODO move port to config. Where to get addr?
 	if err != nil {
 		t.Fatalf("Cannot make get: %v\n", err)
@@ -433,4 +437,37 @@ func TestMainExecution(t *testing.T) {
 	}
 	assert.Equal(t, map[string]interface{}{"status": "ok"}, decodedResponse,
 		"Should return status:ok")
+}
+
+func TestGetBodyString(t *testing.T) {
+	tmpfile, err := ioutil.TempFile("", "test-file")
+	if err != nil {
+		t.Fatalf("Cannot create temp file: %v\n", err)
+	}
+	defer os.Remove(tmpfile.Name())
+
+	content := []byte("Some text")
+	if _, err = tmpfile.Write(content); err != nil {
+		t.Fatalf("Cannot write a string to tmp file: %v\n", err)
+	}
+
+	// Close file to flush buffers
+	if err = tmpfile.Close(); err != nil {
+		t.Fatalf("Cannot close temp file: %v\n", err)
+	}
+	tmpfile2, err := os.Open(tmpfile.Name())
+	if err != nil {
+		t.Fatalf("Cannot reopen temp file: %v\n", err)
+	}
+
+	result, err := getBodyString(tmpfile2)
+	if err != nil {
+		t.Fatalf("Cannot read tmp file: %v\n", err)
+	}
+	assert.Equal(t, content, []byte(result), "File should contain the contents written")
+
+	result, err = getBodyString(tmpfile)
+	assert.Equal(t, "", result, " Should return empty string for unreadable file (closed)")
+	assert.NotEqual(t, nil, err, "Should return error in case of read error")
+
 }

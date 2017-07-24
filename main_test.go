@@ -70,7 +70,7 @@ func TestCheckSite_OneDoesNotContain(t *testing.T) {
 	testCase := &TimeoutTestCase{
 		timeout: time.Duration(time.Millisecond * 5),
 		content: "This site contains search text",
-		search:  "does not contains",
+		search:  "does not contain",
 	}
 	ts1 := httptest.NewServer(makeHandlerWithTimeout(t, testCase))
 	defer ts1.Close()
@@ -417,10 +417,11 @@ func TestChecksSitesHandler_InvalidJSON(t *testing.T) {
 }
 
 func TestMainExecution(t *testing.T) {
+	var config = GetConfig()
 	go main()
 	// Wait for launch
 	time.Sleep(time.Duration(200) * time.Millisecond)
-	resp, err := http.Get("http://127.0.0.1:8080/checkHealth") //TODO move port to config. Where to get addr?
+	resp, err := http.Get("http://" + config.Http.Listen + "/checkHealth") //TODO move port to config. Where to get addr?
 	if err != nil {
 		t.Fatalf("Cannot make get: %v\n", err)
 	}

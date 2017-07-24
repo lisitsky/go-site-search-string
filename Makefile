@@ -7,7 +7,7 @@ install:
 	go install
 
 test:
-	HTTP_TIMEOUT=1 go test -v -cover -race
+	HTTP_TIMEOUT=1 HTTP_LISTEN=127.0.0.1:8080 go test -v -cover -race
 
 build:
 	go build -v -o build/go-site-search-string

@@ -10,7 +10,7 @@ go:
   # - master  the same as 'tip'
 
 before_install:
-  - go get github.com/mattn/goveralls
+  - go get github.com/lisitsky/goveralls
   - go get golang.org/x/tools/cmd/cover
   
 script:

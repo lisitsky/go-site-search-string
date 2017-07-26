@@ -15,7 +15,7 @@ before_install:
   
 script:
   - make
-  - $HOME/gopath/bin/goveralls -debug -v -service=travis-ci
+  - $HOME/gopath/bin/goveralls -debug -service=travis-ci
 
 #install:
 #  - go get -u github.com/lisitsky/go-site-search-string

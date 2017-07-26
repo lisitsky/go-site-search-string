@@ -1,18 +1,18 @@
 # build stage
-FROM golang:1.8 AS build-env
-ADD . /src
-RUN cd /src && go get -t -v github.com/lisitsky/go-site-search-string && go build -o goapp
-
-# final stage
-FROM alpine
-WORKDIR /app
-COPY --from=build-env /src/goapp /app/
-ENTRYPOINT /goapp
-
+#FROM golang:1.8 AS build-env
+#ADD . /src
+#RUN cd /src && go get -t -v github.com/lisitsky/go-site-search-string && go build -o goapp
+#
+## final stage
+#FROM alpine
+#WORKDIR /app
+#COPY --from=build-env /src/goapp /app/
+#ENTRYPOINT /goapp
+#
 
 ###
 # Basic image builder
-#FROM golang:onbuild AS builder
+FROM golang:onbuild AS builder
 #EXPOSE 8080
 
 #FROM golang:1.8

@@ -4,6 +4,10 @@ language: go
 #  Goveralls hangs and cannot send data on dist:trusty.
 dist: precise              
 
+env:
+  - HTTP_TIMEOUT=1
+  - HTTP_LISTEN=127.0.0.1:8080
+
 go:
   - 1.8.x
   - tip

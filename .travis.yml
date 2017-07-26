@@ -5,9 +5,11 @@ language: go
 dist: trusty
 
 env:
-  matrix:
+  global:
     - HTTP_TIMEOUT=1
+  matrix:
     - HTTP_LISTEN=127.0.0.1:8080
+    - HTTP_LISTEN=
 
 go:
   - 1.8.x

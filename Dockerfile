@@ -4,7 +4,7 @@ ADD . /src
 RUN set -x && \
 	cd /src && \
 	go get -t -v github.com/lisitsky/go-site-search-string && \
-	go build -o goapp
+	CGO_ENABLED=0 GOOS=linux go build -a -o goapp
 
 # final stage
 FROM alpine

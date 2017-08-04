@@ -1,5 +1,5 @@
 # build stage
-FROM golang:1.8 # AS build-env
+FROM golang:1.8
 ADD . /src
 RUN set -x && \
 	cd /src && \

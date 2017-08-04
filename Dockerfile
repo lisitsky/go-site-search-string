@@ -1,5 +1,5 @@
 # build stage
-FROM golang:1.8 AS build-env
+FROM golang:1.8 # AS build-env
 ADD . /src
 RUN set -x && \
 	cd /src && \
@@ -9,7 +9,7 @@ RUN set -x && \
 # final stage
 FROM alpine
 WORKDIR /app
-COPY --from=build-env /src/goapp /app/
+COPY --from=0 /src/goapp /app/
 ENTRYPOINT /goapp
 EXPOSE 8080
 
